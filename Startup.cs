@@ -27,77 +27,36 @@ namespace Platform7
                 app.UseDeveloperExceptionPage();
             }
 
-                //Первый параметр делегата Func, который передается в метод Use(), представляет объект HttpContext.
-                //Этот объект позволяет получить данные запроса и управлять ответом клиенту.
+            //Первый параметр делегата Func, который передается в метод Use(), представляет объект HttpContext.
+            //Этот объект позволяет получить данные запроса и управлять ответом клиенту.
 
-                //Второй параметр делегата представляет другой делегат -Func < Task > или RequestDelegate.
-                //Этот делегат представляет следующий в конвейере компонент middleware, которому будет передаваться обработка запроса.
+            //Второй параметр делегата представляет другой делегат -Func < Task > или RequestDelegate.
+            //Этот делегат представляет следующий в конвейере компонент middleware, которому будет передаваться обработка запроса.
 
-                //Работа middleware разбивается на две части:
-                //Middleware выполняет некоторую начальную обработку запроса до вызова await next()
-                //Затем вызывается метод next(), который передает обработку запроса следующему компоненту в конвейере
-
-            Func<HttpContext, Func<Task>, Task> func = async delegate (HttpContext context, Func<Task> tsk)
-            {
-
-                await context.Response.WriteAsync("func");
-                await tsk.Invoke();
-            };
+            //Работа middleware разбивается на две части:
+            //Middleware выполняет некоторую начальную обработку запроса до вызова await next()
+            //Затем вызывается метод next(), который передает обработку запроса следующему компоненту в конвейере
 
 
-            app.Use(func);
+
+           
+
+
 
             app.Use(async delegate (HttpContext context, Func<Task> func)
             {
-                string s = "dron";
 
-                if (context.Request.Path == "/use")
+                if (context.Request.Query["custom"] == "true")
                 {
-                    //await context.Response.WriteAsync("dron");
-                    await context.Response.WriteAsync(@"
-                    <!DOCTYPE html>
-                    <html lang=""en"">
-                    <head><title>Response</title></head>
-                    <body>
-                    <h2>Formatted Response </h2>
-                    </body>
-                    </html>");
-
-
+                   await  context.Response.WriteAsync("custom Middleware\n");
                 }
 
-                else
-                {
-                    await func.Invoke();
-                }
-
+              await  func.Invoke();
 
             });
 
-
-
-            app.Use(delegate (HttpContext context, Func<Task> func)
-            {
-
-                if (context.Request.Path == "/use2")
-                {
-                    return context.Response.WriteAsync("\n dron");
-                }
-
-                else
-                {
-                    return func.Invoke();
-                }
-
-
-            });
-
-            app.Use(async(context,next) => {
-                await context.Response.WriteAsync("\n lambda");
-                await next();
-            });
-
-
+            app.UseMiddleware<QueryStringMiddleware>();
+           
 
             app.UseRouting();
 
@@ -105,9 +64,51 @@ namespace Platform7
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("\n Hello World!");
+                    await context.Response.WriteAsync(" Hello World!");
                 });
             });
         }
     }
 }
+
+
+//Func<HttpContext, Func<Task>, Task> func = async delegate (HttpContext context, Func<Task> tsk)
+//{
+//    if (context.Request.Method == HttpMethods.Get && context.Request.Query["custom"] == "true")
+//    {
+//        await context.Response.WriteAsync("func Custom Middleware\n");
+//    }
+
+
+//    await tsk.Invoke();
+//};
+
+
+//app.Use(func);
+
+//app.Use(async delegate (HttpContext context, Func<Task> func)
+//{
+
+
+//    if (context.Request.Path == "/use")
+//    {
+//        //await context.Response.WriteAsync("dron");
+//        await context.Response.WriteAsync(@"
+//                    <!DOCTYPE html>
+//                    <html lang=""en"">
+//                    <head><title>Response</title></head>
+//                    <body>
+//                    <h2>Formatted Response  </h2>
+//                    </body>
+//                    </html>");
+
+
+//    }
+
+//    else
+//    {
+//        await func.Invoke();
+//    }
+
+
+//});
