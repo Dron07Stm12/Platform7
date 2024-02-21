@@ -48,6 +48,17 @@ namespace Platform7
             });
 
 
+            app.Use(async delegate(HttpContext context, Func<Task> tsk) {
+
+                if (context.Request.Path == "/short")
+                {
+                    await context.Response.WriteAsync("short");
+                }
+
+                else { await tsk.Invoke(); }
+            });
+
+
 
             app.Use(async delegate (HttpContext context, Func<Task> func)
             {
