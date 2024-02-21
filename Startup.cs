@@ -39,7 +39,13 @@ namespace Platform7
 
 
 
-           
+            app.Use(async delegate (HttpContext context,Func<Task> func) {
+            
+            
+                await  func.Invoke();
+                await context.Response.WriteAsync($"\nstatus code: {context.Response.StatusCode}"); 
+            
+            });
 
 
 
