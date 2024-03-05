@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
+
 
 namespace Platform7
 {
@@ -39,51 +42,208 @@ namespace Platform7
 
 
 
-            app.Use(async delegate (HttpContext context,Func<Task> func) {
-            
-            
-                await  func.Invoke();
-                await context.Response.WriteAsync($"\nstatus code: {context.Response.StatusCode}"); 
-            
-            });
-
-
-            app.Use(async delegate(HttpContext context, Func<Task> tsk) {
-
-                if (context.Request.Path == "/short")
-                {
-                    await context.Response.WriteAsync("short");
-                }
-
-                else { await tsk.Invoke(); }
-            });
-
-
-
-            app.Use(async delegate (HttpContext context, Func<Task> func)
+            app.Map("/branch", branch =>
             {
-
-                if (context.Request.Query["custom"] == "true")
+                branch.UseMiddleware<QueryStringMiddleware>();
+                branch.Use(async (context, next) =>
                 {
-                   await  context.Response.WriteAsync("custom Middleware\n");
-                }
-
-              await  func.Invoke();
-
-            });
-
-            app.UseMiddleware<QueryStringMiddleware>();
-           
-
-            app.UseRouting();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync(" Hello World!");
+                    await context.Response.WriteAsync($"Branch Middleware");
                 });
             });
+
+
+            RequestDelegate request2 = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
+
+            Func<HttpContext, bool> func = delegate (HttpContext context) {
+
+                if (context.Request.Path == "/func")
+                {
+                    return true;
+                }
+
+                else { return false; }
+            
+            };
+            app.MapWhen(func, delegate(IApplicationBuilder builder) {
+
+                builder.Use(delegate (HttpContext context, Func<Task> tsk)
+                {
+
+                    Task task = context.Response.WriteAsync(" use");
+                    Task task2 = tsk();
+                    return Task.WhenAll(task, task2);
+
+                });
+
+
+                builder.Use(delegate (HttpContext context, Func<Task> tsk)
+                {
+
+                    Task task = context.Response.WriteAsync("\n use2");
+                    Task task2 = tsk();
+                    return Task.WhenAll(task, task2);
+
+                });
+
+                builder.Run(request2);
+            
+            });
+
+            
+
+
+
+            app.Map("/br", delegate (IApplicationBuilder builder)
+            {
+
+                builder.Use(delegate (HttpContext context, Func<Task> tsk)
+                {
+
+                    Task task = context.Response.WriteAsync(" use");
+                    Task task2 = tsk();
+                    return Task.WhenAll(task, task2);
+
+                });
+
+                RequestDelegate request = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
+
+                builder.Run(request);   
+
+                builder.Run(delegate(HttpContext context) { return context.Response.WriteAsync("Requestdelegat"); });
+
+                builder.Use(delegate (HttpContext context, Func<Task> tsk)
+                {
+
+                    Task task = context.Response.WriteAsync("\n use2");
+                    Task task2 = tsk();
+                    return Task.WhenAll(task, task2);
+
+                });
+
+
+                builder.Use(delegate (HttpContext context, Func<Task> tsk)
+                {
+
+                    if (context.Request.Path == "/path")
+                    {
+                        return context.Response.WriteAsync("\n path");
+                    }
+
+                    else
+                    {
+                        return tsk.Invoke();
+                    }
+                    //Task task = context.Response.WriteAsync("\n use2");
+                    //Task task2 = tsk();
+                    //return Task.WhenAll(task, task2);
+
+                });
+
+
+            });
+
+
+
+
+
+
+
+
+
+
+            //app.Map("/branch",  delegate (IApplicationBuilder builder)                          
+            //{ 
+
+            //     builder.Use( delegate(HttpContext context, Func<Task> tsk) 
+            //     {
+            //      //   return context.Response.WriteAsync("Branch Middleware2");
+            //         return tsk();  
+            //         //Task task1= context.Response.WriteAsync("Branch Middleware2");
+            //         //Task task2= tsk();
+            //         //return Task.WhenAll(task1, task2); 
+
+            //    });
+
+            //    builder.Use(async delegate (HttpContext context, Func<Task> func)
+            //    {
+            //        await context.Response.WriteAsync("\nBranch Middleware3");
+            //        await func.Invoke();
+            //    });
+
+
+
+            //    builder.Use(delegate (HttpContext context, Func<Task> tsk)
+            //    {
+
+            //        Task task = context.Response.WriteAsync($"\n HTTPS Request: {context.Request.IsHttps}");
+            //        Task task2 = tsk();
+
+            //        //  return task;
+            //        return Task.WhenAll(task, task2);
+            //    });
+
+
+
+
+
+            //});
+
+
+
+
+
+            //app.Use(async delegate (HttpContext context,Func<Task> func) {
+
+
+            //    await  func.Invoke();
+            //    await context.Response.WriteAsync($"\nstatus code: {context.Response.StatusCode}"); 
+
+            //});
+
+
+            //app.Use(async delegate(HttpContext context, Func<Task> tsk) {
+
+            //    if (context.Request.Path == "/short")
+            //    {
+            //        await context.Response.WriteAsync("short");
+            //    }
+
+            //    else { await tsk.Invoke(); }
+            //});
+
+
+
+            //app.Use(async delegate (HttpContext context, Func<Task> func)
+            //{
+
+            //    if (context.Request.Query["custom"] == "true")
+            //    {
+            //       await  context.Response.WriteAsync("custom Middleware\n");
+            //    }
+
+            //  await  func.Invoke();
+
+            //});
+
+            //app.UseMiddleware<QueryStringMiddleware>();
+
+
+            app.UseRouting();
+            RequestDelegate request = delegate (HttpContext context) { return context.Response.WriteAsync("endpoint_request"); };
+            app.UseEndpoints(delegate(IEndpointRouteBuilder endpoint) {
+                endpoint.MapGet("/",request);
+                //endpoint.MapGet("/",async delegate (HttpContext context) { await context.Response.WriteAsync("delegate_UseEndpoint"); });
+            
+            });
+
+
+            //app.UseEndpoints(endpoints =>
+            //{
+            //    endpoints.MapGet("/", async context =>
+            //    {
+            //        await context.Response.WriteAsync(" Hello World!");
+            //    });
+            //});
         }
     }
 }
