@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,6 +21,7 @@ namespace Platform7
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvc(delegate(MvcOptions mvc) {  mvc.EnableEndpointRouting = false; });  
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -30,202 +32,30 @@ namespace Platform7
                 app.UseDeveloperExceptionPage();
             }
 
-            //Первый параметр делегата Func, который передается в метод Use(), представляет объект HttpContext.
-            //Этот объект позволяет получить данные запроса и управлять ответом клиенту.
-
-            //Второй параметр делегата представляет другой делегат -Func < Task > или RequestDelegate.
-            //Этот делегат представляет следующий в конвейере компонент middleware, которому будет передаваться обработка запроса.
-
-            //Работа middleware разбивается на две части:
-            //Middleware выполняет некоторую начальную обработку запроса до вызова await next()
-            //Затем вызывается метод next(), который передает обработку запроса следующему компоненту в конвейере
-
 
 
             app.Map("/branch", branch =>
             {
                 branch.UseMiddleware<QueryStringMiddleware>();
-                branch.Use(async (context, next) =>
-                {
-                    await context.Response.WriteAsync($"Branch Middleware");
+                branch.Use(async delegate (HttpContext context, Func<Task> tsk)
+                {                                     
+                    await context.Response.WriteAsync("Branch Middleware");
+                    await tsk();    
                 });
-            });
-
-
-            RequestDelegate request2 = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
-
-            Func<HttpContext, bool> func = delegate (HttpContext context) {
-
-                if (context.Request.Path == "/func")
-                {
-                    return true;
-                }
-
-                else { return false; }
-            
-            };
-            app.MapWhen(func, delegate(IApplicationBuilder builder) {
-
-                builder.Use(delegate (HttpContext context, Func<Task> tsk)
-                {
-
-                    Task task = context.Response.WriteAsync(" use");
-                    Task task2 = tsk();
-                    return Task.WhenAll(task, task2);
-
-                });
-
-
-                builder.Use(delegate (HttpContext context, Func<Task> tsk)
-                {
-
-                    Task task = context.Response.WriteAsync("\n use2");
-                    Task task2 = tsk();
-                    return Task.WhenAll(task, task2);
-
-                });
-
-                builder.Run(request2);
-            
+                
             });
 
             
 
 
-
-            app.Map("/br", delegate (IApplicationBuilder builder)
-            {
-
-                builder.Use(delegate (HttpContext context, Func<Task> tsk)
-                {
-
-                    Task task = context.Response.WriteAsync(" use");
-                    Task task2 = tsk();
-                    return Task.WhenAll(task, task2);
-
-                });
-
-                RequestDelegate request = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
-
-                builder.Run(request);   
-
-                builder.Run(delegate(HttpContext context) { return context.Response.WriteAsync("Requestdelegat"); });
-
-                builder.Use(delegate (HttpContext context, Func<Task> tsk)
-                {
-
-                    Task task = context.Response.WriteAsync("\n use2");
-                    Task task2 = tsk();
-                    return Task.WhenAll(task, task2);
-
-                });
-
-
-                builder.Use(delegate (HttpContext context, Func<Task> tsk)
-                {
-
-                    if (context.Request.Path == "/path")
-                    {
-                        return context.Response.WriteAsync("\n path");
-                    }
-
-                    else
-                    {
-                        return tsk.Invoke();
-                    }
-                    //Task task = context.Response.WriteAsync("\n use2");
-                    //Task task2 = tsk();
-                    //return Task.WhenAll(task, task2);
-
-                });
-
-
-            });
+           
 
 
 
+            
 
+            app.UseMiddleware<QueryStringMiddleware>();
 
-
-
-
-
-
-            //app.Map("/branch",  delegate (IApplicationBuilder builder)                          
-            //{ 
-
-            //     builder.Use( delegate(HttpContext context, Func<Task> tsk) 
-            //     {
-            //      //   return context.Response.WriteAsync("Branch Middleware2");
-            //         return tsk();  
-            //         //Task task1= context.Response.WriteAsync("Branch Middleware2");
-            //         //Task task2= tsk();
-            //         //return Task.WhenAll(task1, task2); 
-
-            //    });
-
-            //    builder.Use(async delegate (HttpContext context, Func<Task> func)
-            //    {
-            //        await context.Response.WriteAsync("\nBranch Middleware3");
-            //        await func.Invoke();
-            //    });
-
-
-
-            //    builder.Use(delegate (HttpContext context, Func<Task> tsk)
-            //    {
-
-            //        Task task = context.Response.WriteAsync($"\n HTTPS Request: {context.Request.IsHttps}");
-            //        Task task2 = tsk();
-
-            //        //  return task;
-            //        return Task.WhenAll(task, task2);
-            //    });
-
-
-
-
-
-            //});
-
-
-
-
-
-            //app.Use(async delegate (HttpContext context,Func<Task> func) {
-
-
-            //    await  func.Invoke();
-            //    await context.Response.WriteAsync($"\nstatus code: {context.Response.StatusCode}"); 
-
-            //});
-
-
-            //app.Use(async delegate(HttpContext context, Func<Task> tsk) {
-
-            //    if (context.Request.Path == "/short")
-            //    {
-            //        await context.Response.WriteAsync("short");
-            //    }
-
-            //    else { await tsk.Invoke(); }
-            //});
-
-
-
-            //app.Use(async delegate (HttpContext context, Func<Task> func)
-            //{
-
-            //    if (context.Request.Query["custom"] == "true")
-            //    {
-            //       await  context.Response.WriteAsync("custom Middleware\n");
-            //    }
-
-            //  await  func.Invoke();
-
-            //});
-
-            //app.UseMiddleware<QueryStringMiddleware>();
 
 
             app.UseRouting();
@@ -235,18 +65,24 @@ namespace Platform7
                 //endpoint.MapGet("/",async delegate (HttpContext context) { await context.Response.WriteAsync("delegate_UseEndpoint"); });
             
             });
-
-
-            //app.UseEndpoints(endpoints =>
-            //{
-            //    endpoints.MapGet("/", async context =>
-            //    {
-            //        await context.Response.WriteAsync(" Hello World!");
-            //    });
-            //});
+          
         }
     }
 }
+
+
+
+//Первый параметр делегата Func, который передается в метод Use(), представляет объект HttpContext.
+//Этот объект позволяет получить данные запроса и управлять ответом клиенту.
+
+//Второй параметр делегата представляет другой делегат -Func < Task > или RequestDelegate.
+//Этот делегат представляет следующий в конвейере компонент middleware, которому будет передаваться обработка запроса.
+
+//Работа middleware разбивается на две части:
+//Middleware выполняет некоторую начальную обработку запроса до вызова await next()
+//Затем вызывается метод next(), который передает обработку запроса следующему компоненту в конвейере
+
+
 
 
 //Func<HttpContext, Func<Task>, Task> func = async delegate (HttpContext context, Func<Task> tsk)
@@ -289,3 +125,93 @@ namespace Platform7
 
 
 //});
+
+
+//RequestDelegate request2 = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
+
+//Func<HttpContext, bool> func = delegate (HttpContext context) {
+
+//    if (context.Request.Path == "/func")
+//    {
+//        return true;
+//    }
+
+//    else { return false; }
+
+//};
+//app.MapWhen(func, delegate (IApplicationBuilder builder) {
+
+//    builder.Use(delegate (HttpContext context, Func<Task> tsk)
+//    {
+
+//        Task task = context.Response.WriteAsync(" use");
+//        Task task2 = tsk();
+//        return Task.WhenAll(task, task2);
+
+//    });
+
+
+//    builder.Use(delegate (HttpContext context, Func<Task> tsk)
+//    {
+
+//        Task task = context.Response.WriteAsync("\n use2");
+//        Task task2 = tsk();
+//        return Task.WhenAll(task, task2);
+
+//    });
+
+//    builder.Run(request2);
+
+//});
+
+
+
+//app.Map("/br", delegate (IApplicationBuilder builder)
+//{
+
+//    builder.Use(delegate (HttpContext context, Func<Task> tsk)
+//    {
+
+//        Task task = context.Response.WriteAsync(" use");
+//        Task task2 = tsk();
+//        return Task.WhenAll(task, task2);
+
+//    });
+
+//    RequestDelegate request = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
+
+//    builder.Run(request);
+
+//    builder.Run(delegate (HttpContext context) { return context.Response.WriteAsync("Requestdelegat"); });
+
+//    builder.Use(delegate (HttpContext context, Func<Task> tsk)
+//    {
+
+//        Task task = context.Response.WriteAsync("\n use2");
+//        Task task2 = tsk();
+//        return Task.WhenAll(task, task2);
+
+//    });
+
+
+//    builder.Use(delegate (HttpContext context, Func<Task> tsk)
+//    {
+
+//        if (context.Request.Path == "/path")
+//        {
+//            return context.Response.WriteAsync("\n path");
+//        }
+
+//        else
+//        {
+//            return tsk.Invoke();
+//        }
+//        //Task task = context.Response.WriteAsync("\n use2");
+//        //Task task2 = tsk();
+//        //return Task.WhenAll(task, task2);
+
+//    });
+
+
+//});
+
