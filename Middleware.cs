@@ -14,6 +14,11 @@ namespace Platform7
             this.request = request;  
         }
 
+        public QueryStringMiddleware()
+        {
+                
+        }
+
 
         public async Task InvokeAsync(HttpContext context) {
 
@@ -23,8 +28,13 @@ namespace Platform7
             {
                 await context.Response.WriteAsync("class  Middleware\n");
             }
+
+            if (request != null)
+            {
+                await request.Invoke(context);
+            }
             
-            await request.Invoke(context);
+           
         }
 
     }

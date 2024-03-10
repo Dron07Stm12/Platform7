@@ -37,6 +37,7 @@ namespace Platform7
             app.Map("/branch", branch =>
             {
                 branch.UseMiddleware<QueryStringMiddleware>();
+
                 branch.Use(async delegate (HttpContext context, Func<Task> tsk)
                 {                                     
                     await context.Response.WriteAsync("Branch Middleware");
@@ -45,8 +46,22 @@ namespace Platform7
                 
             });
 
-            
 
+            app.Map("/branch2", delegate (IApplicationBuilder builder) {
+
+                builder.Run(new QueryStringMiddleware().InvokeAsync);
+            
+            
+            });
+
+            RequestDelegate request2 = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
+
+            app.Map("/br", delegate (IApplicationBuilder builder) {
+            
+              builder.UseMiddleware<QueryStringMiddleware>();
+                builder.Run(request2);
+               
+            });
 
            
 
