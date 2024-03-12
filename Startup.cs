@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 
 
@@ -21,11 +23,30 @@ namespace Platform7
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(delegate(MvcOptions mvc) {  mvc.EnableEndpointRouting = false; });  
+            //services.Configure<MessageOptions>(options =>
+            //{
+            //    options.CityName = "Albany";
+            //    options.CountryName = "Ukrain";
+            //});
+
+            Action<MessageOptions> action = delegate (MessageOptions options)
+            {
+                options.CityName = "Stachaniv";
+                options.CountryName = "Ukrain";
+            };
+
+            services.Configure(action);
+
+            //services.Configure<MessageOptions>(delegate (MessageOptions configuration)
+            //{
+            //     configuration.CityName = "Stahxanov";
+            //     configuration.CountryName = "Ukraine";
+            //});
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IOptions<MessageOptions> options)
         {
             if (env.IsDevelopment())
             {
@@ -34,43 +55,17 @@ namespace Platform7
 
 
 
-            app.Map("/branch", branch =>
-            {
-                branch.UseMiddleware<QueryStringMiddleware>();
+            app.Use(async delegate (HttpContext context,Func<Task> func) {
 
-                branch.Use(async delegate (HttpContext context, Func<Task> tsk)
-                {                                     
-                    await context.Response.WriteAsync("Branch Middleware");
-                    await tsk();    
-                });
-                
-            });
-
-
-            app.Map("/branch2", delegate (IApplicationBuilder builder) {
-
-                builder.Run(new QueryStringMiddleware().InvokeAsync);
-            
+                if (context.Request.Path == "/location2")
+                {
+                    await context.Response.WriteAsync($"{options.Value.CityName = "Kadiivka"} {options.Value.CountryName}");
+                }
+                else { await func.Invoke(); }
             
             });
 
-            RequestDelegate request2 = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
-
-            app.Map("/br", delegate (IApplicationBuilder builder) {
-            
-              builder.UseMiddleware<QueryStringMiddleware>();
-                builder.Run(request2);
-               
-            });
-
-           
-
-
-
-            
-
-            app.UseMiddleware<QueryStringMiddleware>();
-
+            app.UseMiddleware<LocationMiddleware>();
 
 
             app.UseRouting();
@@ -229,4 +224,44 @@ namespace Platform7
 
 
 //});
+
+
+
+
+//app.Map("/branch", branch =>
+//{
+//    branch.UseMiddleware<QueryStringMiddleware>();
+
+//    branch.Use(async delegate (HttpContext context, Func<Task> tsk)
+//    {
+//        await context.Response.WriteAsync("Branch Middleware");
+//        await tsk();
+//    });
+
+//});
+
+
+//app.Map("/branch2", delegate (IApplicationBuilder builder) {
+
+//    builder.Run(new QueryStringMiddleware().InvokeAsync);
+
+
+//});
+
+//RequestDelegate request2 = delegate (HttpContext context) { return context.Response.WriteAsync("\nrequest"); };
+
+//app.Map("/br", delegate (IApplicationBuilder builder) {
+
+//    builder.UseMiddleware<QueryStringMiddleware>();
+//    builder.Run(request2);
+
+//});
+
+
+
+
+
+
+
+//app.UseMiddleware<QueryStringMiddleware>();
 

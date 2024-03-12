@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 
 
 namespace Platform7
@@ -38,4 +39,30 @@ namespace Platform7
         }
 
     }
+
+   public class LocationMiddleware
+   {
+        private RequestDelegate request;
+        private MessageOptions message;
+        public LocationMiddleware(RequestDelegate _request,IOptions<MessageOptions> options)
+        {
+           request = _request;
+           message= options.Value;
+        }
+
+
+        public async Task Invoke(HttpContext context) {
+
+            if (context.Request.Path == "/location")
+            {
+                await context.Response.WriteAsync($"{message.countryName}  {message.cityName}");
+            }
+
+            if (request != null) { await request(context); }
+        }
+
+
+   }
+
+
 }
