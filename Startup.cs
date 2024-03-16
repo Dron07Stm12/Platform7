@@ -12,8 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-
-
+using Platform;
 
 namespace Platform7
 {
@@ -23,26 +22,7 @@ namespace Platform7
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            //services.Configure<MessageOptions>(options =>
-            //{
-            //    options.CityName = "Albany";
-            //    options.CountryName = "Ukrain";
-            //});
-
-            Action<MessageOptions> action = delegate (MessageOptions options)
-            {
-                options.CityName = "Stachaniv";
-                options.CountryName = "Ukrain";
-            };
-
-            services.Configure(action);
-
-            //services.Configure<MessageOptions>(delegate (MessageOptions configuration)
-            //{
-            //     configuration.CityName = "Stahxanov";
-            //     configuration.CountryName = "Ukraine";
-            //});
-
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -55,27 +35,35 @@ namespace Platform7
 
 
 
-            app.Use(async delegate (HttpContext context,Func<Task> func) {
-
-                if (context.Request.Path == "/location2")
-                {
-                    await context.Response.WriteAsync($"{options.Value.CityName = "Kadiivka"} {options.Value.CountryName}");
-                }
-                else { await func.Invoke(); }
-            
-            });
-
-            app.UseMiddleware<LocationMiddleware>();
+            app.UseMiddleware<Population>();
+            app.UseMiddleware<Capital>();
 
 
             app.UseRouting();
-            RequestDelegate request = delegate (HttpContext context) { return context.Response.WriteAsync("endpoint_request"); };
-            app.UseEndpoints(delegate(IEndpointRouteBuilder endpoint) {
-                endpoint.MapGet("/",request);
-                //endpoint.MapGet("/",async delegate (HttpContext context) { await context.Response.WriteAsync("delegate_UseEndpoint"); });
+
+            
+
+            
+
+            app.UseEndpoints(delegate (IEndpointRouteBuilder endpoint)
+            {
+                endpoint.MapGet("routing",async delegate (HttpContext context) {
+                 await context.Response.WriteAsync("useEndpoint");   
+                
+                });
+
+                endpoint.MapGet("route",async delegate (HttpContext context) { await context.Response.WriteAsync("\t route"); });
+              //  endpoint.MapGet("/capital/uk",new Population().Invoke);
+             //   endpoint.MapGet("/population/paris", new Capital().Invoke);
+
+            });
+
+            app.Use(async delegate (HttpContext context, Func<Task> func) {
+
+                await context.Response.WriteAsync("use");
             
             });
-          
+
         }
     }
 }
@@ -263,5 +251,65 @@ namespace Platform7
 
 
 
-//app.UseMiddleware<QueryStringMiddleware>();
+//public class Startup
+//{
+//    // This method gets called by the runtime. Use this method to add services to the container.
+//    // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
+//    public void ConfigureServices(IServiceCollection services)
+//    {
+//        //services.Configure<MessageOptions>(options =>
+//        //{
+//        //    options.CityName = "Albany";
+//        //    options.CountryName = "Ukrain";
+//        //});
+
+//        Action<MessageOptions> action = delegate (MessageOptions options)
+//        {
+//            options.CityName = "Stachaniv";
+//            options.CountryName = "Ukrain";
+//        };
+
+//        services.Configure(action);
+
+//        //services.Configure<MessageOptions>(delegate (MessageOptions configuration)
+//        //{
+//        //     configuration.CityName = "Stahxanov";
+//        //     configuration.CountryName = "Ukraine";
+//        //});
+
+//    }
+
+//    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+//    public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IOptions<MessageOptions> options)
+//    {
+//        if (env.IsDevelopment())
+//        {
+//            app.UseDeveloperExceptionPage();
+//        }
+
+
+
+//        app.Use(async delegate (HttpContext context, Func<Task> func) {
+
+//            if (context.Request.Path == "/location2")
+//            {
+//                await context.Response.WriteAsync($"{options.Value.CityName = "Kadiivka"} {options.Value.CountryName}");
+//            }
+//            else { await func.Invoke(); }
+
+//        });
+
+//        app.UseMiddleware<LocationMiddleware>();
+
+
+//        app.UseRouting();
+//        RequestDelegate request = delegate (HttpContext context) { return context.Response.WriteAsync("endpoint_request"); };
+//        app.UseEndpoints(delegate (IEndpointRouteBuilder endpoint) {
+//            endpoint.MapGet("/", request);
+//            //endpoint.MapGet("/",async delegate (HttpContext context) { await context.Response.WriteAsync("delegate_UseEndpoint"); });
+
+//        });
+
+//    }
+//}
 
