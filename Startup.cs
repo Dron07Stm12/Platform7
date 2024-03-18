@@ -35,8 +35,8 @@ namespace Platform7
 
 
 
-            app.UseMiddleware<Population>();
-            app.UseMiddleware<Capital>();
+         //   app.UseMiddleware<Population>();
+         //   app.UseMiddleware<Capital>();
 
 
             app.UseRouting();
@@ -52,9 +52,12 @@ namespace Platform7
                 
                 });
 
-                endpoint.MapGet("route",async delegate (HttpContext context) { await context.Response.WriteAsync("\t route"); });
-              //  endpoint.MapGet("/capital/uk",new Population().Invoke);
-             //   endpoint.MapGet("/population/paris", new Capital().Invoke);
+                endpoint.MapGet("route",async delegate (HttpContext context) { await context.Response.WriteAsync("\t route"); });               
+                endpoint.MapGet("population/london",new Population().Invoke);
+
+                Capital capital = new Capital();
+                endpoint.MapGet("capital/uk", capital.Invoke);
+                endpoint.MapGet("capital/monaco", capital.Invoke);
 
             });
 
