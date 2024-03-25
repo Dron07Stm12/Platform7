@@ -52,12 +52,17 @@ namespace Platform7
                 
                 });
 
-                endpoint.MapGet("route",async delegate (HttpContext context) { await context.Response.WriteAsync("\t route"); });               
-                endpoint.MapGet("population/london",new Population().Invoke);
+                endpoint.MapGet("{first}/{second}/{fhird}",async delegate (HttpContext context) { await context.Response.WriteAsync("");
 
-                Capital capital = new Capital();
-                endpoint.MapGet("capital/uk", capital.Invoke);
-                endpoint.MapGet("capital/monaco", capital.Invoke);
+                    foreach (var item in context.Request.RouteValues)
+                    {
+                        await context.Response.WriteAsync($" {item.Key}\t  {item.Value}\n");   
+                    }
+
+                });
+
+                endpoint.MapGet("{w}/{t}", async delegate (HttpContext context) { await context.Response.WriteAsync("one, two"); });
+               
 
             });
 
